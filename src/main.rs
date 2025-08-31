@@ -27,9 +27,6 @@ use windows::{
 // Global variable to keep track of the hook
 static HOOK_HANDLE: Lazy<Mutex<Option<HHOOK>>> = Lazy::new(|| Mutex::new(None));
 static RUNNING: AtomicBool = AtomicBool::new(true);
-// Track if Command/Win keys are being held down
-static LEFT_WIN_PRESSED: AtomicBool = AtomicBool::new(false);
-static RIGHT_WIN_PRESSED: AtomicBool = AtomicBool::new(false);
 
 // The keyboard hook callback function
 extern "system" fn keyboard_hook_proc(code: i32, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
@@ -43,17 +40,10 @@ extern "system" fn keyboard_hook_proc(code: i32, wparam: WPARAM, lparam: LPARAM)
         // Check if the key is Win key (Command key on Mac keyboards)
         let is_cmd_key = key_code == VK_LWIN.0 as u32 || key_code == VK_RWIN.0 as u32;
 
-        // Determine if it's a key press or release
-        let is_key_down = wparam.0 == WM_KEYDOWN as usize;
-        let is_key_up = wparam.0 == WM_KEYUP as usize;
-
-        // Update Command/Win key state
         if is_cmd_key {
-            if key_code == VK_LWIN.0 as u32 {
-                LEFT_WIN_PRESSED.store(is_key_down, Ordering::SeqCst);
-            } else {
-                RIGHT_WIN_PRESSED.store(is_key_down, Ordering::SeqCst);
-            }
+            // Determine if it's a key press or release
+            let is_key_down = wparam.0 == WM_KEYDOWN as usize;
+            let is_key_up = wparam.0 == WM_KEYUP as usize;
 
             if is_key_down || is_key_up {
                 // Map Left Win to Left Ctrl, Right Win to Right Ctrl
@@ -69,17 +59,6 @@ extern "system" fn keyboard_hook_proc(code: i32, wparam: WPARAM, lparam: LPARAM)
                 // Return 1 to prevent the system from passing the command key event to applications
                 return LRESULT(1);
             }
-        } 
-        // Check if any other key is pressed while Command/Win is being held
-        else if LEFT_WIN_PRESSED.load(Ordering::SeqCst) || RIGHT_WIN_PRESSED.load(Ordering::SeqCst) {
-            // For Command+Key combinations, we still want the Ctrl+Key functionality to work
-            // but prevent the original Command+Key default behavior
-            
-            // Allow the Ctrl+Key combination to go through naturally
-            // (we don't need to manually send it because the Win→Ctrl remapping is already active)
-            
-            // Return 1 to prevent the system from processing the Command+Key combination with default behavior
-            return LRESULT(1);
         }
     }
 
