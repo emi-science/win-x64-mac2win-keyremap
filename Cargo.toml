@@ -1,0 +1,13 @@
+[package]
+name = "mac2win-keyremap"
+version = "0.1.0"
+edition = "2021"
+authors = ["KeyRemap Team"]
+description = "Remaps Mac Command key to Windows CTRL key for better keyboard experience"
+
+[dependencies]
+windows = { version = "0.48", features = ["Win32_UI_WindowsAndMessaging", "Win32_Foundation", "Win32_UI_Input_KeyboardAndMouse"] }
+log = "0.4"
+env_logger = "0.10"
+ctrlc = "3.4"
+once_cell = "1.17"
